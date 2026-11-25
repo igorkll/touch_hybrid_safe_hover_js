@@ -1,3 +1,6 @@
+let enabled = false;
+let lastInteractionType = null;
+
 function removeClassFromAllElements(className) {
     document.querySelectorAll(`.${className}`).forEach(element => {
         element.classList.remove(className);
@@ -10,6 +13,8 @@ function getElementsAt(x, y, all=false) {
 }
 
 function handle_pointerdown(e) {
+    lastInteractionType = e.pointerType;
+
     removeClassFromAllElements("touch_hybrid_safe_hover-ts_active");
     removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover");
     removeClassFromAllElements("touch_hybrid_safe_hover-ts_active-bubble");
@@ -19,11 +24,24 @@ function handle_pointerdown(e) {
     getElementsAt(e.clientX, e.clientY, false).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_hover"));
     getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_active-bubble"));
     getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_hover-bubble"));
+
+    if (e.pointerType === "mouse") {
+        removeClassFromAllElements("touch_hybrid_safe_hover-ts_none");
+        removeClassFromAllElements("touch_hybrid_safe_hover-ts_none-bubble");
+
+        getElementsAt(e.clientX, e.clientY, false).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_none"));
+        getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_none-bubble"));
+    }
 }
 
 function handle_pointermove(e) {
+    lastInteractionType = e.pointerType;
+
     removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover");
     removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover-bubble");
+
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_none");
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_none-bubble");
     
     if (e.pointerType === "mouse") {
         removeClassFromAllElements("touch_hybrid_safe_hover-ts_active");
@@ -31,8 +49,10 @@ function handle_pointermove(e) {
 
         getElementsAt(e.clientX, e.clientY, false).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_active"));
         getElementsAt(e.clientX, e.clientY, false).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_hover"));
+        getElementsAt(e.clientX, e.clientY, false).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_none"));
         getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_active-bubble"));
         getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_hover-bubble"));
+        getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_none-bubble"));
     } else {
         getElementsAt(e.clientX, e.clientY, false).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_hover"));
         getElementsAt(e.clientX, e.clientY, true).forEach(element => element.classList.add("touch_hybrid_safe_hover-ts_hover-bubble"));
@@ -56,16 +76,20 @@ function handle_pointermove(e) {
     }
 }
 
-function handle_pointerup_pointercancel(e) {
-    if (e.pointerType !== "mouse") {
-        removeClassFromAllElements("touch_hybrid_safe_hover-ts_active");
-        removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover");
-        removeClassFromAllElements("touch_hybrid_safe_hover-ts_active-bubble");
-        removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover-bubble");
-    }
+function removeAllClasses() {
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_active");
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover");
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_active-bubble");
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_hover-bubble");
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_none-bubble");
+    removeClassFromAllElements("touch_hybrid_safe_hover-ts_none-bubble");
 }
 
-let enabled = false;
+function handle_pointerup_pointercancel(e) {
+    if (e.pointerType !== "mouse") {
+        removeAllClasses();
+    }
+}
 
 export function enable() {
     if (enabled) return;
@@ -82,9 +106,14 @@ export function disable() {
     document.removeEventListener("pointermove", handle_pointermove);
     document.removeEventListener("pointerup", handle_pointerup_pointercancel);
     document.removeEventListener("pointercancel", handle_pointerup_pointercancel);
+    removeAllClasses();
     enabled = false;
 }
 
 export function isEnabled() {
     return enabled;
+}
+
+export function getLastInteractionType() {
+    return lastInteractionType;
 }
